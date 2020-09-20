@@ -1,0 +1,1 @@
+create table file(id serial not null, name varchar(999), path varchar(999), size bigint not null, unique(name, path) )

@@ -1,0 +1,13 @@
+<div class="container">
+    {{#instances.0}}
+    <table border="1">
+        <tr><th>id</th><th><a href="index.html?size=asc">size</a></th>
+            <th><a href="index.html?name=asc">name</a></th>
+            <th><a href="index.html?fullPath=asc">fullPath</a></th></tr>
+        {{>instance}}
+    </table>
+    {{/instances.0}}
+    {{^instances.0}}
+    <h1>No Duplicates</h1>
+    {{/instances.0}}
+</div>
