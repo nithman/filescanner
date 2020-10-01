@@ -35,11 +35,44 @@ public class ScannerController {
 
     String plural = "select path,name,size from file where name in " +
             "(select name from (SELECT name,count(*) n FROM FILE group by name,size) where n > 1) " +
-            "order by path,name,size";
+            "order by name,path,size";
     @GetMapping("/plural")
     public List<Instance> plural() {
         return h2Template.query(
                 plural,
+                (rs, rowNum) ->
+                        new Instance(
+                                rowNum + 1,
+                                rs.getString("name"),
+                                toBashPath(rs.getString("path")),
+                                rs.getLong("size")
+                        )
+        );    }
+
+
+    String paths = "select path,count(*) kount,sum(size) size from file where name in " +
+            "(select name from (SELECT name,count(*) n FROM FILE group by name,size) where n > 1) " +
+            "group by path order by path";
+    @GetMapping("/path")
+    public List<Instance> path() {
+        return h2Template.query(
+                paths,
+                (rs, rowNum) ->
+                        new Instance(
+                                rowNum + 1,
+                                Long.toString(rs.getLong("kount")),
+                                toBashPath(rs.getString("path")),
+                                rs.getLong("size")
+                        )
+        );    }
+
+    String single = "select path,name,size from file where name in " +
+            "(select name from (SELECT name,count(*) n FROM FILE group by name,size) where n = 1) " +
+            "order by path,name,size";
+    @GetMapping("/single")
+    public List<Instance> single() {
+        return h2Template.query(
+                single,
                 (rs, rowNum) ->
                         new Instance(
                                 rowNum + 1,
@@ -56,6 +89,18 @@ public class ScannerController {
     @GetMapping("/plurals")
     public ModelAndView displayInstance(Map<String, Object> model) {
         model.put("instances", plural());
+        return new ModelAndView("index", model);
+    }
+
+    @GetMapping("/paths")
+    public ModelAndView displayPaths(Map<String, Object> model) {
+        model.put("instances", path());
+        return new ModelAndView("index", model);
+    }
+
+    @GetMapping("/singles")
+    public ModelAndView displaySingles(Map<String, Object> model) {
+        model.put("instances", single());
         return new ModelAndView("index", model);
     }
 
