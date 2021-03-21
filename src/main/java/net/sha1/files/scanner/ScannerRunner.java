@@ -22,8 +22,8 @@ public class ScannerRunner implements CommandLineRunner {
     @Value("${scanner.directory}")
     private String base;
 
-    @Value("${scanner.extension}")
-    private String extension;
+    @Value("${scanner.extensions}")
+    private String extensions;
 
     @Autowired
     JdbcTemplate h2Template;
@@ -67,10 +67,12 @@ public class ScannerRunner implements CommandLineRunner {
         if (filename != null) {
             String sql = "insert into file(name,path,size)values(?, ?, ?)";
             for (String s : filename) {
-                if (s.endsWith(extension)) {
-                    File f = new File(base + File.separator + s);
-                    LOG.info(s + " " + base + " " + f.length());
-                    h2Template.update(sql, s, base, f.length());
+                for (String extension : extensions.split(",")) {
+                    if (s.endsWith(extension)) {
+                        File f = new File(base + File.separator + s);
+                        LOG.info(s + " " + base + " " + f.length());
+                        h2Template.update(sql, s, base, f.length());
+                    }
                 }
             }
         }
