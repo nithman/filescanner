@@ -11,6 +11,10 @@ import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
 import java.io.File;
+import java.io.IOException;
+import java.nio.channels.FileChannel;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 
 @Component
 public class ScannerRunner implements CommandLineRunner {
@@ -29,40 +33,32 @@ public class ScannerRunner implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-
-        LOG.info("START");
         for (String arg : args) {
             LOG.info(arg);
-            dumpBase(arg);
+            walkTree(arg);
         }
-        LOG.info("END");
     }
 
-    private void dumpBase(String base) {
-        //LOG.info(base);
-        File file = new File(base);
-        String[] d = file.list((current, name) -> new File(current, name).isDirectory());
+    private void walkTree(String arg) throws IOException {
+        Files.walkFileTree(Paths.get(arg), new SimpleFileVisitor<Path>() {
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                    throws IOException {
+                String sql = "insert into file(name,path,size)values(?, ?, ?)";
+                if (!Files.isDirectory(file)) {
+                    String s = file.getFileName().toString();
+                    for (String extension : extensions.split(",")) {
+                        if (s.endsWith(extension)) {
+                            FileChannel fileChannel = FileChannel.open(file);
+                            long fileSize = fileChannel.size();
+                            LOG.info(s + " " + fileSize);
+                            h2Template.update(sql, s, file.toString(), fileSize);
 
-        if (d != null) {
-            for (String s : d) {
-                if (!s.contains("RECYCLE.BIN") && !s.contains("System Volume Information")) {
-                    String fullPath = base + File.separator + s;
-                    dumpBase(fullPath);
-                }
-            }
-        }
-        String[] filename = file.list((current, name) -> new File(current, name).isFile());
-        if (filename != null) {
-            String sql = "insert into file(name,path,size)values(?, ?, ?)";
-            for (String s : filename) {
-                for (String extension : extensions.split(",")) {
-                    if (s.endsWith(extension)) {
-                        File f = new File(base + File.separator + s);
-                        LOG.info(s + " " + base + " " + f.length());
-                        h2Template.update(sql, s, base, f.length());
+                        }
                     }
                 }
+                return FileVisitResult.CONTINUE;
             }
-        }
+        });
     }
 }
