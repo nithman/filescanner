@@ -26,16 +26,6 @@ public class ScannerRunner implements CommandLineRunner {
 
     @Autowired
     JdbcTemplate h2Template;
-//
-//    private DataSource getH2DataSource() {
-//        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
-//
-//        dataSourceBuilder.driverClassName("org.h2.Driver");
-//        dataSourceBuilder.url("jdbc:h2:mem:scanner");
-//        dataSourceBuilder.username("sa");
-//        dataSourceBuilder.password("");
-//        return dataSourceBuilder.build();
-//    }
 
     @Override
     public void run(String... args) throws Exception {
