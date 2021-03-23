@@ -7,7 +7,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.jdbc.DataSourceBuilder;
 import org.springframework.jdbc.core.JdbcTemplate;
-import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.stereotype.Component;
 
 import javax.sql.DataSource;
@@ -27,17 +26,16 @@ public class ScannerRunner implements CommandLineRunner {
 
     @Autowired
     JdbcTemplate h2Template;
-    //= new JdbcTemplate(getH2DataSource());
-
-    private DataSource getH2DataSource() {
-        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
-
-        dataSourceBuilder.driverClassName("org.h2.Driver");
-        dataSourceBuilder.url("jdbc:h2:mem:scanner");
-        dataSourceBuilder.username("sa");
-        dataSourceBuilder.password("");
-        return dataSourceBuilder.build();
-    }
+//
+//    private DataSource getH2DataSource() {
+//        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+//
+//        dataSourceBuilder.driverClassName("org.h2.Driver");
+//        dataSourceBuilder.url("jdbc:h2:mem:scanner");
+//        dataSourceBuilder.username("sa");
+//        dataSourceBuilder.password("");
+//        return dataSourceBuilder.build();
+//    }
 
     @Override
     public void run(String... args) throws Exception {
@@ -76,6 +74,5 @@ public class ScannerRunner implements CommandLineRunner {
                 }
             }
         }
-
     }
 }
