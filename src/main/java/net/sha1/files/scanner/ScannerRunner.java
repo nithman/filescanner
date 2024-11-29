@@ -28,32 +28,62 @@ public class ScannerRunner implements CommandLineRunner {
     @Value("${scanner.extensions}")
     private String extensions;
 
+    public void setBase(String base) {
+        this.base = base;
+    }
+
+    public void setExtensions(String extensions) {
+        this.extensions = extensions;
+    }
+
     @Autowired
     JdbcTemplate h2Template;
+
+    void setH2DataSource() {
+        DataSourceBuilder dataSourceBuilder = DataSourceBuilder.create();
+
+        dataSourceBuilder.driverClassName("org.h2.Driver");
+        dataSourceBuilder.url("jdbc:h2:mem:scanner");
+        dataSourceBuilder.username("sa");
+        dataSourceBuilder.password("");
+        h2Template = new JdbcTemplate(dataSourceBuilder.build());
+    }
+
+    void createFileTable() {
+        String sql = "create table file(" +
+                "id serial not null, name varchar(999), path varchar(999), size bigint not null, unique(name, path))";
+        h2Template.execute(sql);
+    }
 
     @Override
     public void run(String... args) throws Exception {
         for (String arg : args) {
-            LOG.info(arg);
-            walkTree(arg);
+            LOG.trace(arg);
+            walkTree(Paths.get(arg));
         }
     }
 
-    private void walkTree(String arg) throws IOException {
-        Files.walkFileTree(Paths.get(arg), new SimpleFileVisitor<Path>() {
+    void walkTree(Path path) throws IOException {
+        LOG.info("walkTree " + path.toString());
+
+        Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
                     throws IOException {
+                LOG.debug("walkTree " + file.toString());
+
                 String sql = "insert into file(name,path,size)values(?, ?, ?)";
                 if (!Files.isDirectory(file)) {
                     String s = file.getFileName().toString();
                     for (String extension : extensions.split(",")) {
+                        LOG.trace(extension);
+
                         if (s.endsWith(extension)) {
                             FileChannel fileChannel = FileChannel.open(file);
                             long fileSize = fileChannel.size();
-                            LOG.info(s + " " + fileSize);
-                            h2Template.update(sql, s, file.toString(), fileSize);
+                            LOG.info(s + " " + file.toString() + " " + fileSize);
 
+                            h2Template.update(sql, s, file.toString(), fileSize);
                         }
                     }
                 }

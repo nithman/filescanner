@@ -33,12 +33,37 @@ public class ScannerController {
                         )
         );    }
 
-    String plural = "select path,name,size from file where name in " +
+    public static String dual = "select path,name,size from file where name in " +
+            "(select name from (SELECT name,count(*) n FROM FILE group by name) where n > 1) " +
+            "order by name,path,size";
+    @GetMapping("/dual")
+    public List<Instance> dual() {
+        return dual(h2Template);
+    }
+
+    public static List<Instance> dual(JdbcTemplate jdbcTemplate) {
+        return jdbcTemplate.query(
+                dual,
+                (rs, rowNum) ->
+                        new Instance(
+                                rowNum + 1,
+                                rs.getString("name"),
+                                toBashPath(rs.getString("path")),
+                                rs.getLong("size")
+                        )
+        );
+    }
+
+    public static String plural = "select path,name,size from file where name in " +
             "(select name from (SELECT name,count(*) n FROM FILE group by name,size) where n > 1) " +
             "order by name,path,size";
     @GetMapping("/plural")
     public List<Instance> plural() {
-        return h2Template.query(
+        return plural(h2Template);
+    }
+
+    public static List<Instance> plural(JdbcTemplate jdbcTemplate) {
+        return jdbcTemplate.query(
                 plural,
                 (rs, rowNum) ->
                         new Instance(
@@ -47,8 +72,8 @@ public class ScannerController {
                                 toBashPath(rs.getString("path")),
                                 rs.getLong("size")
                         )
-        );    }
-
+        );
+    }
 
     String paths = "select path,count(*) kount,sum(size) size from file where name in " +
             "(select name from (SELECT name,count(*) n FROM FILE group by name,size) where n > 1) " +
@@ -82,8 +107,14 @@ public class ScannerController {
                         )
         );    }
 
-    private String toBashPath(String path) {
+    private static String toBashPath(String path) {
         return "/" + path.replace(":", "").replace("\\", "/");
+    }
+
+    @GetMapping("/duals")
+    public ModelAndView displayDuels(Map<String, Object> model) {
+        model.put("instances", dual());
+        return new ModelAndView("index", model);
     }
 
     @GetMapping("/plurals")
